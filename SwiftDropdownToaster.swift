@@ -16,7 +16,7 @@ class SwiftDropdownToaster: NSObject {
     
     let toastHeight: CGFloat = 40.0
     
-    func addToView(view: UIView, style: ToastStyle, message: String, duration: NSTimeInterval = 3.0, font: UIFont? = nil) {
+    func addToView(view: UIView, style: ToastStyle, message: String, duration: NSTimeInterval = 3.0, font: UIFont) {
         
         let toast = DropdownToastView(frame: CGRect(x: 0, y: -toastHeight, width: view.frame.width, height: toastHeight), style: style, message: message, font: font)
         
@@ -49,7 +49,7 @@ class SwiftDropdownToaster: NSObject {
 
 class DropdownToastView: UIView {
 
-    init(frame: CGRect, style: ToastStyle, message: String, font: UIFont?) {
+    init(frame: CGRect, style: ToastStyle, message: String, font: UIFont) {
         super.init(frame: frame)
         
         var color: UIColor!
@@ -67,11 +67,7 @@ class DropdownToastView: UIView {
         self.backgroundColor = color
         
         let label = UILabel(frame: CGRect(origin: CGPointZero, size: frame.size))
-        
-        if let _ = font {
-            label.font = font
-        }
-        
+        label.font = font
         label.textColor = UIColor.whiteColor()
         label.numberOfLines = 1
         label.text = message
