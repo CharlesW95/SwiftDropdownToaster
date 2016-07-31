@@ -14,19 +14,24 @@ enum ToastStyle: Int {
 
 class SwiftDropdownToaster: NSObject {
     
-    let toastHeight: CGFloat = 40.0
+    // Configurables.
+    var toastHeight: CGFloat = 60.0
+    var duration: NSTimeInterval = 2.5
     
-    func addToView(view: UIView, style: ToastStyle, message: String, duration: NSTimeInterval = 3.0, font: UIFont? = nil) {
+    var activeToasts = [DropdownToastView]()
+    
+    func addToView(view: UIView, style: ToastStyle, message: String, font: UIFont? = nil, tapHandler: (() -> ())? = nil) {
         
         let toast = DropdownToastView(frame: CGRect(x: 0, y: -toastHeight, width: view.frame.width, height: toastHeight), style: style, message: message, font: font)
         
         view.addSubview(toast)
+        activeToasts.append(toast)
         
         UIView.animateWithDuration(0.5, animations: {
             toast.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: self.toastHeight)
             view.layoutIfNeeded()
         }, completion: { finished in
-            let seconds = duration
+            let seconds = self.duration
             let delay = seconds * Double(NSEC_PER_SEC)  // Convert into nanoseconds.
             let dispatchTime = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
             dispatch_after(dispatchTime, dispatch_get_main_queue(), {
@@ -41,15 +46,33 @@ class SwiftDropdownToaster: NSObject {
             view.layoutIfNeeded()
         }, completion: { finished in
             if finished {
-                toast.removeFromSuperview()
+                if let index = self.activeToasts.indexOf(toast) {
+                    self.activeToasts.removeAtIndex(index)
+                    toast.removeFromSuperview()
+                }
             }
         })
+    }
+    
+    func removeAllToasts(view: UIView) {
+        for toast in activeToasts {
+            removeFromView(view, toast: toast)
+        }
     }
 }
 
 class DropdownToastView: UIView {
+    
+    // Take care of optional tapHandlers.
+    var tapHandler: (() -> ())?
+    
+    func callTapHandler() {
+        if let tap = tapHandler {
+            tap()
+        }
+    }
 
-    init(frame: CGRect, style: ToastStyle, message: String, font: UIFont?) {
+    init(frame: CGRect, style: ToastStyle, message: String, font: UIFont?, tapHandler: (() -> ())? = nil) {
         super.init(frame: frame)
         
         var color: UIColor!
@@ -78,6 +101,13 @@ class DropdownToastView: UIView {
         label.textAlignment = .Center
         
         self.addSubview(label)
+        
+        // Integrate tap handler if provided.
+        if let tap = tapHandler {
+            self.tapHandler = tap
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(callTapHandler))
+            self.addGestureRecognizer(tapGesture)
+        }
     }
     
     required init?(coder aDecoder: NSCoder) {
